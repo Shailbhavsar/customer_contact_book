@@ -29,19 +29,9 @@ def validate_email(email):
     if "@" not in email or "." not in email:
         print("Invalid email format.")
         return False
-    if" " in email:
+    if " " in email:
         print("Email cannot contain spaces.")
         return False
-    return True
-
-def validate_duplicate(phone,email):
-    for customer in customers:
-        if customer["phone"] == phone:
-            print("Phone number already exists.")
-            return False
-        if customer["email"] == email:
-            print("Email already exists.")
-            return False
     return True
 
 
@@ -107,7 +97,7 @@ def search_customer():
             found = True
     if not found:
         print("Customer not found.")
-           
+
 def delete_customer():
     term=input("Enter customer ID to delete: ").strip()
     
@@ -131,7 +121,7 @@ def delete_customer():
             break
         
     if not found:
-         print("Customer not found.")
+        print("Customer not found.")
             
 def update_customer():
     if not customers:
