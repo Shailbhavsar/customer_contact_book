@@ -147,7 +147,7 @@ def update_customer():
             continue
         break
 
-    print("Leave blank to keep current value")
+    print("Press Enter to keep current value")
 
     while True:
         new_name = input(f"Enter new name (current: {customer['name']}): ").strip()
