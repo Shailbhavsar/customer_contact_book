@@ -1,6 +1,29 @@
-import json
-customers = []
 
+import mysql.connector
+
+def get_connection():
+    return mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="Admin1234",
+        database="customer_book"
+    )
+    
+def create_table():
+    conn = get_connection()
+    cursor = conn.cursor() 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS customers ( 
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        phone VARCHAR(10) NOT NULL UNIQUE,
+        email VARCHAR(255) NOT NULL UNIQUE
+    )
+    """)
+    conn.commit()
+    cursor.close()
+    conn.close()    
+        
 def validate_name(name):
     if not name.strip():
         print("Name cannot be empty.")
@@ -43,165 +66,170 @@ def add_customer():
 
     while True:
         phone = input("Enter phone: ").strip()
-        if not validate_phone(phone):
-            continue
-        if any(customer["phone"] == phone for customer in customers):
-            print("Phone number already exists.")
-            continue
-        break
+        if validate_phone(phone):
+            break
 
     while True:
         email = input("Enter email: ").strip()
-        if not validate_email(email):
-            continue
-        if any(customer["email"] == email for customer in customers):
-            print("Email already exists.")
-            continue
-        break
+        if validate_email(email):
+            break
 
-    next_id = max([customer["id"] for customer in customers], default=0) + 1
-    customers.append({
-        "id": next_id,
-        "name": name,
-        "phone": phone,
-        "email": email
-    })
-    print("Customer added!")
-
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO customers (name, phone, email) VALUES (%s, %s, %s)",
+            (name, phone, email)
+        )
+        conn.commit()
+        print("Customer added!")
+    except mysql.connector.IntegrityError:
+        print("Phone or email already exists.")
+    finally:
+        cursor.close()
+        conn.close()
 
 def view_customers():
-    if len(customers) == 0:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, phone, email FROM customers")
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    if not rows:
         print("\nCustomer list is empty.")
     else:
-        for customer in customers:
-            print(f"ID   : {customer['id']}")
-            print(f"Name : {customer['name']}")
-            print(f"Phone: {customer['phone']}")
-            print(f"Email: {customer['email']}")
+        for row in rows:
+            print(f"ID   : {row[0]}")
+            print(f"Name : {row[1]}")
+            print(f"Phone: {row[2]}")
+            print(f"Email: {row[3]}")
             print("-" * 30)
             
 def search_customer():
-    term = input("Enter name , phone or email to search: ").strip().lower()
+    term = input("Enter name, phone or email to search: ").strip().lower()
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, phone, email FROM customers")
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
     found = False
-    
-    for customer in customers:
-        if (term in customer["name"].lower()
-            or term in customer["phone"].lower()
-            or term in customer["email"].lower()
-            ):
-            print(f"ID   : {customer['id']}")
-            print(f"Name : {customer['name']}")
-            print(f"Phone: {customer['phone']}")
-            print(f"Email: {customer['email']}")
+    for row in rows:
+        if (term in row[1].lower()
+            or term in row[2]
+            or term in row[3].lower()):
+            print(f"ID   : {row[0]}")
+            print(f"Name : {row[1]}")
+            print(f"Phone: {row[2]}")
+            print(f"Email: {row[3]}")
             print("-" * 30)
             found = True
+
     if not found:
         print("Customer not found.")
-
+        
 def delete_customer():
-    term=input("Enter customer ID to delete: ").strip()
-    
+    term = input("Enter customer ID to delete: ").strip()
+
     if not term.isdigit():
         print("Invalid ID. Please enter a valid ID.")
         return
-    
-    term = int(term)
-    found = False
-        
-     
-    for customer in customers:
-        if customer["id"] == term:
-            confirm = input(f"Are you sure you want to delete {customer['name']}? (y/n): ").strip().lower()
-            if confirm != 'y':
-                print("Deletion cancelled.")
-                return
-            customers.remove(customer)
-            print("Customer deleted.")
-            found=True
-            break
-        
-    if not found:
+
+    customer_id = int(term)
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM customers WHERE id = %s", (customer_id,))
+    result = cursor.fetchone()
+
+    if not result:
         print("Customer not found.")
-            
-def update_customer():
-    if not customers:
-        print("No customers available to update.")
+        cursor.close()
+        conn.close()
         return
 
-    print("\nCurrent customers:")
+    confirm = input(f"Are you sure you want to delete {result[0]}? (y/n): ").strip().lower()
+    if confirm == 'y':
+        cursor.execute("DELETE FROM customers WHERE id = %s", (customer_id,))
+        conn.commit()
+        print("Customer deleted.")
+    else:
+        print("Deletion cancelled.")
+
+    cursor.close()
+    conn.close()
+                
+def update_customer():
     view_customers()
 
-    while True:
-        term = input("Enter customer ID to update (or press Enter to cancel): ").strip()
-        if term == "":
-            print("Update cancelled.")
-            return
-        if not term.isdigit():
-            print("Invalid ID. Please enter a valid ID.")
-            continue
+    term = input("Enter customer ID to update (or press Enter to cancel): ").strip()
+    if term == "":
+        print("Update cancelled.")
+        return
+    if not term.isdigit():
+        print("Invalid ID. Please enter a valid ID.")
+        return
 
-        term = int(term)
-        customer = next((c for c in customers if c["id"] == term), None)
-        if customer is None:
-            print("Customer not found. Please enter a valid ID.")
-            continue
-        break
+    customer_id = int(term)
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, phone, email FROM customers WHERE id = %s", (customer_id,))
+    customer = cursor.fetchone()
+
+    if not customer:
+        print("Customer not found.")
+        cursor.close()
+        conn.close()
+        return
 
     print("Press Enter to keep current value")
 
+    new_name = customer[1]
     while True:
-        new_name = input(f"Enter new name (current: {customer['name']}): ").strip()
-        if not new_name:
+        name_input = input(f"Enter new name (current: {customer[1]}): ").strip()
+        if name_input == "":
             break
-        if validate_name(new_name):
-            customer["name"] = new_name
+        if validate_name(name_input):
+            new_name = name_input
             break
 
+    new_phone = customer[2]
     while True:
-        new_phone = input(f"Enter new phone (current: {customer['phone']}): ").strip()
-        if not new_phone:
+        phone_input = input(f"Enter new phone (current: {customer[2]}): ").strip()
+        if phone_input == "":
             break
-        if not validate_phone(new_phone):
-            continue
-        if any(c["phone"] == new_phone and c != customer for c in customers):
-            print("Phone number already exists.")
-            continue
-        customer["phone"] = new_phone
-        break
+        if validate_phone(phone_input):
+            new_phone = phone_input
+            break
 
+    new_email = customer[3]
     while True:
-        new_email = input(f"Enter new email (current: {customer['email']}): ").strip()
-        if not new_email:
+        email_input = input(f"Enter new email (current: {customer[3]}): ").strip()
+        if email_input == "":
             break
-        if not validate_email(new_email):
-            continue
-        if any(c["email"] == new_email and c != customer for c in customers):
-            print("Email already exists.")
-            continue
-        customer["email"] = new_email
-        break
+        if validate_email(email_input):
+            new_email = email_input
+            break
 
-    print("Customer updated.")
-
-
-def save_to_file():
-    with open("customers.json", "w") as file:
-        json.dump(customers, file, indent=4)
-    print("Data saved")
-
-
-def load_from_file():
     try:
-        with open("customers.json", "r") as file:
-            global customers
-            data = json.load(file)
-            customers = data if isinstance(data, list) else []
-        print("Data loaded")
-    except FileNotFoundError:
-        print("No data file found. Starting with empty customer list.")
-    except json.JSONDecodeError:
-        print("Data file is corrupted. Starting with empty customer list.")
-load_from_file()
+        cursor.execute(
+            "UPDATE customers SET name=%s, phone=%s, email=%s WHERE id=%s",
+            (new_name, new_phone, new_email, customer_id)
+        )
+        conn.commit()
+        print("Customer updated.")
+    except mysql.connector.IntegrityError:
+        print("Phone or email already exists.")
+    finally:
+        cursor.close()
+        conn.close()
+        
+create_table()
                             
 while True:
         print("\nCustomer Contact Book")
@@ -214,17 +242,14 @@ while True:
         choice = input("\nEnter your choice: ").strip()
         if choice == '1':
             add_customer()
-            save_to_file()
         elif choice == '2':
             view_customers()
         elif choice == '3':
             search_customer()
         elif choice == '4':
             delete_customer()
-            save_to_file()
         elif choice == '5':
-            update_customer() 
-            save_to_file()   
+            update_customer()  
         elif choice == '6':
             print("Exiting...")
             break
