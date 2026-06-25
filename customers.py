@@ -54,6 +54,9 @@ def validate_name(name):
     if any(char.isdigit() for char in name):
         print("Name cannot contain numbers.")
         return False
+    if not all(char.isalpha() or char.isspace() for char in name):  
+        print("Name can only contain letters and spaces.")
+        return False
     parts = name.split()
     if len(parts) < 2:
         print("Please  enter both first name and last name.")
