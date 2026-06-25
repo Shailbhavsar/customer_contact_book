@@ -164,6 +164,8 @@ def get_age(dob):
     return age
 
 def get_or_create_state(state_name):
+    state_name = state_name.strip().upper()
+
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -183,6 +185,8 @@ def get_or_create_state(state_name):
 
 
 def get_or_create_city(city_name, state_id):
+    city_name = city_name.strip().upper()
+    
     conn = get_connection()
     cursor = conn.cursor()
 
