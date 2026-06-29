@@ -1,13 +1,5 @@
 from database import get_connection
-from validation import (
-    validate_name,
-    validate_phone, 
-    validate_email, 
-    validate_address,
-    validate_dob, 
-    validate_city_state, 
-    format_dob, 
-    get_age)
+import validation
 
 
 
@@ -61,46 +53,43 @@ def get_or_create_city(city_name, state_id):
 def add_customer():
     while True:
         name = input("Enter name: ").strip()
-        if validate_name(name):
+        if validation.validate_name(name):
             break
 
     while True:
         phone = input("Enter phone: ").strip()
-        if validate_phone(phone):
+        if validation.validate_phone(phone):
             break
 
     while True:
         email = input("Enter email: ").strip()
-        if validate_email(email):
+        if validation.validate_email(email):
             break
 
     while True:
         dob_input = input("Enter date of birth (DDMMYYYY): ").strip()
-        if dob_input == "":
-                dob = ""
-                break
-        dob = format_dob(dob_input)
+        dob = validation.format_dob(dob_input)
         if dob is not None:
                 break
       
     while True:
         address = input("Enter address: ").strip()
-        if validate_address(address):
+        if validation.validate_address(address):
             break
     while True:
         city_name = input("Enter city: ").strip()
-        if validate_city_state(city_name, "City"):
+        if validation.validate_city_state(city_name, "City"):
             break
 
     while True:
         state_name = input("Enter state: ").strip()
-        if validate_city_state(state_name, "State"):
+        if validation.validate_city_state(state_name, "State"):
             break
 
     state_id = get_or_create_state(state_name)
     city_id = get_or_create_city(city_name, state_id)
 
-    age = get_age(dob) 
+    age = validation.get_age(dob) 
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
@@ -137,7 +126,7 @@ def view_customers():
             print(f"Phone   : {row[2]}")
             print(f"Email   : {row[3]}")
             print(f"DOB     : {row[4].strftime('%d-%m-%Y') if row[4] else '—'}")
-            print(f"Age     : {get_age(row[4]) if row[4] else '—'}")
+            print(f"Age     : {validation.get_age(row[4]) if row[4] else '—'}")
             print(f"Address : {row[5] or '—'}")
             print(f"City    : {row[6] or '—'}")
             print(f"State   : {row[7] or '—'}")
@@ -176,7 +165,7 @@ def search_customer():
         print(f"Phone   : {row[2]}")
         print(f"Email   : {row[3]}")
         print(f"DOB     : {row[4].strftime('%d-%m-%Y') if row[4] else '—'}")
-        print(f"Age     : {get_age(row[4]) if row[4] else '—'}")
+        print(f"Age     : {validation.get_age(row[4]) if row[4] else '—'}")
         print(f"Address : {row[5] or '—'}")
         print(f"City    : {row[6] or '—'}")
         print(f"State   : {row[7] or '—'}")
@@ -248,7 +237,7 @@ def update_customer():
         name_input = input(f"Enter new name (current: {customer[1]}): ").strip()
         if name_input == "":
             break
-        if validate_name(name_input):
+        if validation.validate_name(name_input):
             new_name = name_input
             break
 
@@ -260,7 +249,7 @@ def update_customer():
         if phone_input == customer[2]:
             new_phone = phone_input
             break
-        if validate_phone(phone_input):
+        if validation.validate_phone(phone_input):
             new_phone = phone_input
             break
 
@@ -272,7 +261,7 @@ def update_customer():
         if email_input.lower() == customer[3].lower():
             new_email = email_input
             break
-        if validate_email(email_input):
+        if validation.validate_email(email_input):
             new_email = email_input
             break
 
@@ -281,7 +270,7 @@ def update_customer():
         dob_input = input(f"Enter new DOB as DDMMYYYY (current: {customer[4].strftime('%d-%m-%Y') if customer[4] else '—'}): ").strip()
         if dob_input == "":
             break
-        formatted = format_dob(dob_input)
+        formatted = validation.format_dob(dob_input)
         if formatted is not None:
             new_dob = formatted
             break  
@@ -291,7 +280,7 @@ def update_customer():
         address_input = input(f"Enter new address (current: {customer[5] or '—'}): ").strip()
         if address_input == "":
             break
-        if validate_address(address_input):
+        if validation.validate_address(address_input):
             new_address = address_input
             break
 

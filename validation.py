@@ -74,7 +74,8 @@ def validate_address(address):
 
 def validate_dob(dob):
     if not dob:
-        return True 
+        print("Date of birth cannot be empty.")
+        return False
 
     try:
         parsed_date = datetime.strptime(dob, "%d-%m-%Y")
@@ -99,7 +100,8 @@ def format_dob(dob_input):
     digits = dob_input.replace("-", "").strip()
 
     if not digits:
-        return ""
+        print("DOB cannot be empty.")
+        return None
 
     if not digits.isdigit() or len(digits) != 8:
         print("DOB must be in DDMMYYYY format.")
