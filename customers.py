@@ -1,170 +1,15 @@
-from datetime import datetime
-import mysql.connector
-
-def get_connection():
-    return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="Admin1234",
-        database="customer_book"
-    )
-    
-def create_table():
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS states (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            state_name VARCHAR(100) NOT NULL UNIQUE
-        )
-    """)
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS cities (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            city_name VARCHAR(100) NOT NULL,
-            state_id INT NOT NULL,
-            FOREIGN KEY (state_id) REFERENCES states(id),
-            UNIQUE (city_name, state_id)
-        )
-    """)
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS customers (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(255) NOT NULL,
-            phone VARCHAR(10) NOT NULL UNIQUE,
-            email VARCHAR(255) NOT NULL UNIQUE,
-            DOB DATE,
-            Address VARCHAR(255) NOT NULL,
-            city_id INT,
-            FOREIGN KEY (city_id) REFERENCES cities(id)
-        )
-    """)
-
-    conn.commit()
-    cursor.close()
-    conn.close()  
-        
-def validate_name(name):
-    if not name.strip():
-        print("Name cannot be empty.")
-        return False
-    if any(char.isdigit() for char in name):
-        print("Name cannot contain numbers.")
-        return False
-    if not all(char.isalpha() or char.isspace() for char in name):  
-        print("Name can only contain letters and spaces.")
-        return False
-    parts = name.split()
-    if len(parts) < 2:
-        print("Please  enter both first name and last name.")
-        return False
-    
-    return True
-
-def validate_phone(phone):
-    if not phone:
-        print("Phone cannot be empty.")
-        return False
-    if not phone.isdigit():
-        print("Phone must contain only digits.")
-        return False
-    if len(phone) != 10:
-        print("Phone number must be 10 digits.")
-        return False
-
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id FROM customers WHERE phone = %s", (phone,))
-    exists = cursor.fetchone()
-    cursor.close()
-    conn.close()
-
-    if exists:
-        print("This phone number is already registered.")
-        return False
-
-    return True
-
-def validate_email(email):
-    if not email:
-        print("Email cannot be empty.")
-        return False
-    if "@" not in email or "." not in email:
-        print("Invalid email format.")
-        return False
-    if " " in email:
-        print("Email cannot contain spaces.")
-        return False
-
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id FROM customers WHERE email = %s", (email,))
-    exists = cursor.fetchone()
-    cursor.close()
-    conn.close()
-
-    if exists:
-        print("This email is already registered.")
-        return False
-
-    return True
-
-def validate_address(address):
-    if not address.strip():
-        print("Address cannot be empty.")
-        return False
-    return True
-
-def validate_dob(dob):
-    if not dob:
-        return True 
-
-    try:
-        parsed_date = datetime.strptime(dob, "%d-%m-%Y")
-    except ValueError:
-        print("Invalid date. Please check the date , month, and year.")
-        return False
-
-    if parsed_date.date() > datetime.now().date():
-        print("Date of birth cannot be in the future.")
-        return False
-
-    return True
-
-def validate_city_state(value, field_name):
-    if not value.strip():
-        print(f"{field_name} cannot be empty.")
-        return False
-    return True
+from database import get_connection
+from validation import (
+    validate_name,
+    validate_phone, 
+    validate_email, 
+    validate_address,
+    validate_dob, 
+    validate_city_state, 
+    format_dob, 
+    get_age)
 
 
-def format_dob(dob_input):
-    digits = dob_input.replace("-", "").strip()
-
-    if not digits:
-        return ""
-
-    if not digits.isdigit() or len(digits) != 8:
-        print("DOB must be in DDMMYYYY format.")
-        return None
-
-    formatted = f"{digits[0:2]}-{digits[2:4]}-{digits[4:8]}"
-
-    if not validate_dob(formatted):
-        return None
-
-    return datetime.strptime(formatted, "%d-%m-%Y").date()
-
-def get_age(dob):
-    if not dob:
-        return None
-    today = datetime.today()
-    age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-    
-    return age
 
 def get_or_create_state(state_name):
     state_name = state_name.strip().upper()
@@ -424,7 +269,7 @@ def update_customer():
         email_input = input(f"Enter new email (current: {customer[3]}): ").strip()
         if email_input == "":
             break
-        if email_input == customer[3]:
+        if email_input.lower() == customer[3].lower():
             new_email = email_input
             break
         if validate_email(email_input):
@@ -484,30 +329,3 @@ def update_customer():
     cursor.close()
     conn.close()
                 
-create_table()
-                            
-while True:
-        print("\nCustomer Contact Book")
-        print("\n1. Add Customer")
-        print("2. View Customers")
-        print("3. Search Customer")
-        print("4. Delete Customer")
-        print("5. Update Customer")
-        print("6. Exit")
-        choice = input("\nEnter your choice: ").strip()
-        if choice == '1':
-            add_customer()
-        elif choice == '2':
-            view_customers()
-        elif choice == '3':
-            search_customer()
-        elif choice == '4':
-            delete_customer()
-        elif choice == '5':
-            update_customer()  
-        elif choice == '6':
-            print("Exiting...")
-            break
-        
-        else:
-            print("Invalid choice. Please try again.")    
