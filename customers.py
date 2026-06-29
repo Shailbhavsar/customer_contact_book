@@ -125,11 +125,11 @@ def view_customers():
             print(f"Name    : {row[1]}")
             print(f"Phone   : {row[2]}")
             print(f"Email   : {row[3]}")
-            print(f"DOB     : {row[4].strftime('%d-%m-%Y') if row[4] else '—'}")
-            print(f"Age     : {validation.get_age(row[4]) if row[4] else '—'}")
-            print(f"Address : {row[5] or '—'}")
-            print(f"City    : {row[6] or '—'}")
-            print(f"State   : {row[7] or '—'}")
+            print(f"DOB     : {row[4].strftime('%d-%m-%Y') }")
+            print(f"Age     : {validation.get_age(row[4])}")
+            print(f"Address : {row[5] }")
+            print(f"City    : {row[6] }")
+            print(f"State   : {row[7]}")
             print("-" * 30)
             
 def search_customer():
@@ -164,11 +164,11 @@ def search_customer():
         print(f"Name    : {row[1]}")
         print(f"Phone   : {row[2]}")
         print(f"Email   : {row[3]}")
-        print(f"DOB     : {row[4].strftime('%d-%m-%Y') if row[4] else '—'}")
-        print(f"Age     : {validation.get_age(row[4]) if row[4] else '—'}")
-        print(f"Address : {row[5] or '—'}")
-        print(f"City    : {row[6] or '—'}")
-        print(f"State   : {row[7] or '—'}")
+        print(f"DOB     : {row[4].strftime('%d-%m-%Y') }")
+        print(f"Age     : {validation.get_age(row[4]) }")
+        print(f"Address : {row[5] }")
+        print(f"City    : {row[6] }")
+        print(f"State   : {row[7] }")
         print("-" * 30)  
               
 def delete_customer():
