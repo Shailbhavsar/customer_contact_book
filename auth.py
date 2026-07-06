@@ -21,10 +21,11 @@ def hash_password(password):
 def verify_password(password, hashed_password):
     return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
 
-def create_jwt_token(username,expiration_minutes=JWT_EXPIRATION_MINUTES):
+def create_jwt_token(username,role,expiration_minutes=JWT_EXPIRATION_MINUTES):
     now = datetime.datetime.now(datetime.timezone.utc)
     payload = {
         "sub": username,
+        "role": role ,
         "iat": now,
         "exp": now + datetime.timedelta(minutes=expiration_minutes)
     }
@@ -90,8 +91,14 @@ def signup():
         conn.close()
         
         if exists:
-            print("Username already exists. Please choose a different username.")
-            continue
+            print(f"\n the username '{username}'is already taken.")
+            print("1. log in instead")
+            print("2. choose a different username")
+            choice = input("Enter your choice (1 or 2): ").strip()
+            if choice == '1':
+                return login()
+            else:
+                continue
         break
     
     while True:
@@ -124,9 +131,11 @@ def signup():
 
     hashed_password = hash_password(password)
     
+    role = "customer"
+    
     conn = database.get_connection()
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO users (username, email, password) VALUES (%s, %s, %s)", (username, email, hashed_password))
+    cursor.execute("INSERT INTO users (username, email, password,role) VALUES (%s, %s, %s,%s)", (username, email, hashed_password,role))
     
     conn.commit()
     cursor.close()
@@ -145,13 +154,14 @@ def login():
         
         conn = database.get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT password FROM users WHERE username = %s", (username,))
+        cursor.execute("SELECT password,role FROM users WHERE username = %s", (username,))
         user = cursor.fetchone()
         cursor.close()
         conn.close()
         
         if user and verify_password(password, user[0]):
-            token = create_jwt_token(username)
+            role = user[1]
+            token = create_jwt_token(username, role)
             print("Login successful.")
             print(f"Your JWT token: {token}")
             return token

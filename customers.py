@@ -176,6 +176,7 @@ def search_customer():
         print("-" * 30)  
               
 def delete_customer():
+    view_customers()
     term = input("Enter customer ID to delete: ").strip()
 
     if not term.isdigit():

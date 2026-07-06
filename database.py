@@ -50,6 +50,7 @@ def create_table():
             username VARCHAR(255) NOT NULL UNIQUE,
             email VARCHAR(255) NOT NULL UNIQUE,
             password VARCHAR(255) NOT NULL,
+            role VARCHAR(20) NOT NULL DEFAULT 'customer',
             customer_id INT,
             FOREIGN KEY (customer_id) REFERENCES customers(id)
         )
