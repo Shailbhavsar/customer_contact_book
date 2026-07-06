@@ -1,12 +1,10 @@
-from database import get_connection
+import database
 import validation
-
-
 
 def get_or_create_state(state_name):
     state_name = state_name.strip().upper()
 
-    conn = get_connection()
+    conn = database.get_connection()
     cursor = conn.cursor()
 
     cursor.execute("SELECT id FROM states WHERE state_name = %s", (state_name,))
@@ -27,7 +25,7 @@ def get_or_create_state(state_name):
 def get_or_create_city(city_name, state_id):
     city_name = city_name.strip().upper()
     
-    conn = get_connection()
+    conn = database.get_connection()
     cursor = conn.cursor()
 
     cursor.execute(
@@ -50,7 +48,7 @@ def get_or_create_city(city_name, state_id):
     conn.close()
     return city_id
 
-def add_customer():
+def add_customer(email=None):
     while True:
         name = input("Enter name: ").strip()
         if validation.validate_name(name):
@@ -60,8 +58,12 @@ def add_customer():
         phone = input("Enter phone: ").strip()
         if validation.validate_phone(phone):
             break
-
-    while True:
+    
+    if email is not None:
+        if not validation.validate_email(email):
+            email = None
+            
+    while email is None:
         email = input("Enter email: ").strip()
         if validation.validate_email(email):
             break
@@ -90,7 +92,7 @@ def add_customer():
     city_id = get_or_create_city(city_name, state_id)
 
     age = validation.get_age(dob) 
-    conn = get_connection()
+    conn = database.get_connection()
     cursor = conn.cursor()
     cursor.execute(
             "INSERT INTO customers (name, phone, email, DOB, Address, city_id) "
@@ -98,12 +100,14 @@ def add_customer():
             (name, phone, email, dob or None, address or None, city_id)
         )
     conn.commit()
+    new_customer_id = cursor.lastrowid
     print("Customer added!")
     cursor.close()
     conn.close()
+    return new_customer_id
 
 def view_customers():
-    conn = get_connection()
+    conn = database.get_connection()
     cursor = conn.cursor()
     cursor.execute("""
         SELECT customers.id, customers.name, customers.phone, customers.email,
@@ -136,7 +140,7 @@ def search_customer():
     term = input("Enter name, phone, email, city or state to search: ").strip().lower()
     pattern = f"%{term}%"
 
-    conn = get_connection()
+    conn = database.get_connection()
     cursor = conn.cursor()
     cursor.execute("""
         SELECT customers.id, customers.name, customers.phone, customers.email,
@@ -180,7 +184,7 @@ def delete_customer():
 
     customer_id = int(term)
 
-    conn = get_connection()
+    conn = database.get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT name FROM customers WHERE id = %s", (customer_id,))
     result = cursor.fetchone()
@@ -216,7 +220,7 @@ def update_customer():
 
     customer_id = int(term)
 
-    conn = get_connection()
+    conn = database.get_connection()
     cursor = conn.cursor()
     cursor.execute(
         "SELECT id, name, phone, email, DOB, Address, city_id FROM customers WHERE id = %s",

@@ -1,5 +1,39 @@
-from datetime import datetime
-from database import get_connection
+import datetime
+import re
+import database
+
+def validate_username(username):
+    if not username.strip():
+        print("Username cannot be empty.")
+        return False
+    if len(username) < 3:
+        print("Username must be at least 3 characters long.")
+        return False
+    if not re.match("^[a-zA-Z0-9_]+$", username):
+        print("Username can only contain letters, numbers, and underscores.")
+        return False
+    return True
+
+def validate_password(password):
+    if not password:
+        print("Password cannot be empty.")
+        return False
+    if len(password) < 8:
+        print("Password must be at least 8 characters long.")
+        return False
+    if not re.search(r"[A-Z]", password):
+        print("Password must contain at least one uppercase letter.")
+        return False
+    if not re.search(r"[a-z]", password):
+        print("Password must contain at least one lowercase letter.")
+        return False
+    if not re.search(r"[0-9]", password):
+        print("Password must contain at least one digit.")
+        return False
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        print("Password must contain at least one special character (!@#$%^&*(),.?\":{}|<>).")
+        return False
+    return True
 
 def validate_name(name):
     if not name.strip():
@@ -29,7 +63,7 @@ def validate_phone(phone):
         print("Phone number must be 10 digits.")
         return False
 
-    conn = get_connection()
+    conn = database.get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT id FROM customers WHERE phone = %s", (phone,))
     exists = cursor.fetchone()
@@ -42,7 +76,7 @@ def validate_phone(phone):
 
     return True
 
-def validate_email(email):
+def is_valid_email_format(email):
     if not email:
         print("Email cannot be empty.")
         return False
@@ -52,8 +86,13 @@ def validate_email(email):
     if " " in email:
         print("Email cannot contain spaces.")
         return False
+    return True
 
-    conn = get_connection()
+def validate_email(email):
+    if not is_valid_email_format(email):
+        return False
+
+    conn = database.get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT id FROM customers WHERE email = %s", (email,))
     exists = cursor.fetchone()
@@ -78,12 +117,12 @@ def validate_dob(dob):
         return False
 
     try:
-        parsed_date = datetime.strptime(dob, "%d-%m-%Y")
+        parsed_date = datetime.datetime.strptime(dob, "%d-%m-%Y")
     except ValueError:
         print("Invalid date. Please check the date , month, and year.")
         return False
 
-    if parsed_date.date() > datetime.now().date():
+    if parsed_date.date() > datetime.datetime.now().date():
         print("Date of birth cannot be in the future.")
         return False
 
@@ -112,12 +151,12 @@ def format_dob(dob_input):
     if not validate_dob(formatted):
         return None
 
-    return datetime.strptime(formatted, "%d-%m-%Y").date()
+    return datetime.datetime.strptime(formatted, "%d-%m-%Y").date()
 
 def get_age(dob):
     if not dob:
         return None
-    today = datetime.today()
+    today = datetime.datetime.today()
     age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
     
     return age

@@ -1,13 +1,32 @@
-from database import create_table
-from customers import (
-    add_customer,
-    view_customers,
-    search_customer, 
-    delete_customer,
-    update_customer )
+import database
+import customers
+import auth
+
+def auth_menu():
+    while True:
+        print("\nCUSTOMER CONTACT BOOK")
+        print("\n1. Login")
+        print("2. Sign Up")
+        print("3. Exit")
+        choice = input("\nEnter your choice: ").strip()
+        if choice == '1':
+            token = auth.login()
+            if token:
+                return token
+        elif choice == '2':
+            auth.signup()
+        elif choice == '3':
+            print("Exiting...")
+            return None
+        else:
+            print("Invalid choice. Please try again.")
+
 
 def main():
-    create_table()
+    database.create_table()
+    token = auth_menu()
+    if not token:
+        return
                             
     while True:
         print("\nCustomer Contact Book")
@@ -19,15 +38,15 @@ def main():
         print("6. Exit")
         choice = input("\nEnter your choice: ").strip()
         if choice == '1':
-            add_customer()
+            customers.add_customer()
         elif choice == '2':
-            view_customers()
+            customers.view_customers()
         elif choice == '3':
-            search_customer()
+            customers.search_customer()
         elif choice == '4':
-            delete_customer()
+            customers.delete_customer()
         elif choice == '5':
-            update_customer()  
+            customers.update_customer()  
         elif choice == '6':
             print("Exiting...")
             break
@@ -37,4 +56,4 @@ def main():
 
 if __name__ == "__main__":
     main()  
-            
+        
